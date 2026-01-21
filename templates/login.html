@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="auth">
+  <div class="card smooth-card">
+
+ 
+    <h2 class="title-auth">Welcome back</h2>
+    <p class="subtitle-auth">Log in to continue your learning</p>
+
+  
+    <form method="POST" class="form">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="you@example.com" required />
+
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Your password" required />
+
+      <button type="submit" class="btn primary full">Log in</button>
+    </form>
+
+ 
+    <p class="muted bottom-text">
+      <a href="{{ url_for('forgot_password') }}">Forgot your password?</a>
+    </p>
+
+    {% if google_enabled %}
+   
+      <div class="or"><span>OR</span></div>
+
+  
+      <a href="{{ url_for('auth_google') }}" class="btn google full google-btn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+        Sign in with Google
+      </a>
+    {% endif %}
+
+    
+    <p class="muted bottom-text">
+      New here? <a href="{{ url_for('signup') }}">Create an account</a>
+    </p>
+
+  </div>
+</div>
+
+{% endblock %}
+
+

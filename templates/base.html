@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BritAIS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+  <div class="nav">
+    <div class="logo">
+      <a href="{{ url_for('home') }}" style="color:#fff; text-decoration:none;">BRITAIS</a>
+    </div>
+
+    <div class="links">
+      {% if session.get('user_email') %}
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('writing') }}">Writing</a>
+        <a href="{{ url_for('speaking') }}">Speaking</a>
+        <a href="{{ url_for('listening') }}">Listening</a>
+        <a href="{{ url_for('planner') }}">Planner</a>
+        <a href="{{ url_for('stats') }}">Stats</a>
+        <a href="{{ url_for('logout') }}">Log out</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('signup') }}">Sign up</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="flash-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
+
+
+

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth">
+  <div class="card">
+    <h2>Create your account</h2>
+    <form method="POST" class="form">
+      <label>Name</label>
+      <input type="text" name="name" placeholder="Your name" />
+
+      <label>Email</label>
+      <input type="email" name="email" placeholder="you@example.com" required />
+
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Minimum 6 characters" required />
+
+      <label>Confirm password</label>
+      <input type="password" name="confirm" placeholder="Repeat password" required />
+
+      <button type="submit" class="btn primary full">Create account</button>
+    </form>
+
+    {% if google_enabled %}
+      <div class="or"><span>or</span></div>
+
+      <a href="{{ url_for('auth_google') }}" class="btn google full">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" />
+        Continue with Google
+      </a>
+    {% endif %}
+
+    <p class="muted">Already have an account?
+      <a href="{{ url_for('login') }}">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

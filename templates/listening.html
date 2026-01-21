@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="task-page">
+  <div class="task-card">
+    <h1 class="task-title">Listening Task</h1>
+
+    <form method="GET" class="task-form" style="margin-bottom: 16px;">
+      <label for="level">Level</label>
+      <select id="level" name="level" style="width:100%;">
+        {% for lv in ["A2","B1","B2","C1","C2"] %}
+          <option value="{{ lv }}" {% if task and task.level == lv %}selected{% endif %}>{{ lv }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn primary full" style="margin-top:10px;">
+        Generate audio + questions
+      </button>
+
+      {% if task %}
+        <a class="btn full" style="margin-top:8px;" href="{{ url_for('listening', level=task.level, new=1) }}">
+          New task (same level)
+        </a>
+      {% endif %}
+    </form>
+
+    {% if task %}
+      <div class="question-box">
+        <p class="question-text"><strong>{{ task.title }}</strong></p>
+        <p class="muted">{{ task.instructions }}</p>
+
+        {% if task.audio_url %}
+          <audio controls style="width:100%; margin-top:10px;">
+            <source src="{{ task.audio_url }}" type="{{ task.audio_mimetype }}">
+            Your browser does not support the audio element.
+          </audio>
+        {% else %}
+          <div style="margin-top:10px;">
+            <button type="button" class="btn full" id="btnSpeak">
+              ▶ Play audio (browser voice)
+            </button>
+            <p class="muted" style="margin-top:8px;">
+              (OpenAI TTS unavailable — using your browser voice instead.)
+            </p>
+          </div>
+
+          <script>
+            const btnSpeak = document.getElementById("btnSpeak");
+            btnSpeak?.addEventListener("click", () => {
+              const text = {{ task.passage|tojson }};
+              const u = new SpeechSynthesisUtterance(text);
+              u.lang = "en-US";
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(u);
+            });
+          </script>
+        {% endif %}
+      </div>
+
+      <form method="POST" class="task-form" style="margin-top:16px;">
+        <input type="hidden" name="task_id" value="{{ task.task_id }}">
+        <input type="hidden" name="level" value="{{ task.level }}">
+
+        {% for q in task.questions %}
+          {% set qi = loop.index0 %}
+          <div class="question-box" style="margin-top:14px;">
+            <p class="question-text"><strong>Q{{ loop.index }}.</strong> {{ q.question }}</p>
+
+            {% for opt in q.options %}
+              <label style="display:block; margin:6px 0;">
+                <input type="radio" name="q{{ qi }}" value="{{ opt }}" required>
+                {{ opt }}
+              </label>
+            {% endfor %}
+          </div>
+        {% endfor %}
+
+        <button type="submit" class="btn primary full" style="margin-top:16px;">
+          Submit answers
+        </button>
+      </form>
+    {% else %}
+      <p class="muted">Choose a level and click “Generate audio + questions”.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+

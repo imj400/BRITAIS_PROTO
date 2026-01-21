@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="task-page">
+  <div class="task-card">
+    <h2 class="task-title">Writing Task</h2>
+
+    <p class="task-subtitle">
+      Write a short composition. In this prototype, your submission will appear in Stats.
+    </p>
+
+    <form method="POST" class="task-form">
+      <label for="essay">Your text</label>
+
+      <textarea
+        id="essay"
+        name="essay"
+        rows="8"
+        placeholder="Write your text here..."
+        required></textarea>
+
+      <button type="submit" class="btn primary full">
+        Submit writing
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+

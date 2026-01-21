@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="task-page">
+  <div class="task-card">
+    <h2 class="task-title">Speaking Task</h2>
+
+    <div class="task-box" style="margin: 16px 0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <h3 style="margin:0;">Today's topic</h3>
+        <a class="btn" href="{{ url_for('speaking', new=1) }}">New topic</a>
+      </div>
+
+      <p style="margin:10px 0 6px 0;"><strong>{{ topic.title }}</strong></p>
+      <p style="margin:0 0 10px 0;">{{ topic.prompt }}</p>
+
+      {% if topic.questions %}
+        <ul style="margin:0; padding-left:18px;">
+          {% for q in topic.questions %}
+            <li>{{ q }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <div class="task-box" style="margin: 16px 0;">
+      <h3 style="margin:0 0 10px 0;">Record your answer</h3>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="btnStart" class="btn primary" type="button">Start recording</button>
+        <button id="btnStop" class="btn" type="button" disabled>Stop</button>
+        <span id="recStatus" class="muted"></span>
+      </div>
+
+      <div style="margin-top:12px;">
+        <audio id="player" controls style="width:100%; display:none;"></audio>
+      </div>
+
+      <p class="muted" style="margin-top:10px;">
+        Tip: 60–90 seconds. Intro → 2 points → example → conclusion.
+      </p>
+    </div>
+
+    <form id="uploadForm" method="POST" enctype="multipart/form-data" class="task-form">
+      <!-- audio file will be injected here -->
+      <input type="hidden" name="topic_json" value='{{ topic | tojson }}' />
+
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" rows="3"
+        placeholder="Example: I hesitated at the beginning, but improved later."></textarea>
+
+      <button id="btnSubmit" type="submit" class="btn primary full" disabled>
+        Submit recording
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  let mediaRecorder = null;
+  let chunks = [];
+  let recordedBlob = null;
+
+  const btnStart = document.getElementById("btnStart");
+  const btnStop = document.getElementById("btnStop");
+  const btnSubmit = document.getElementById("btnSubmit");
+  const recStatus = document.getElementById("recStatus");
+  const player = document.getElementById("player");
+  const uploadForm = document.getElementById("uploadForm");
+
+  function setStatus(text) {
+    recStatus.textContent = text;
+  }
+
+  btnStart.addEventListener("click", async () => {
+    recordedBlob = null;
+    chunks = [];
+    player.style.display = "none";
+    btnSubmit.disabled = true;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Browser decides best mime; webm works in Chrome/Edge. Safari may prefer audio/mp4.
+      const options = {};
+      mediaRecorder = new MediaRecorder(stream, options);
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const mimeType = mediaRecorder.mimeType || "audio/webm";
+        recordedBlob = new Blob(chunks, { type: mimeType });
+
+        const url = URL.createObjectURL(recordedBlob);
+        player.src = url;
+        player.style.display = "block";
+        btnSubmit.disabled = false;
+
+        setStatus("Recording ready ✅");
+        // Stop tracks so mic is released
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      mediaRecorder.start();
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      setStatus("Recording… 🎙️");
+
+    } catch (err) {
+      console.error(err);
+      setStatus("Microphone permission denied or unavailable.");
+    }
+  });
+
+  btnStop.addEventListener("click", () => {
+    if (!mediaRecorder) return;
+    mediaRecorder.stop();
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+    setStatus("Processing…");
+  });
+
+  uploadForm.addEventListener("submit", async (e) => {
+    if (!recordedBlob) {
+      e.preventDefault();
+      setStatus("Please record audio first.");
+      return;
+    }
+
+    // Inject audio file into form as multipart upload
+    const formData = new FormData(uploadForm);
+
+    // pick extension based on mime
+    let ext = "webm";
+    if (recordedBlob.type.includes("ogg")) ext = "ogg";
+    if (recordedBlob.type.includes("mp4")) ext = "mp4";
+
+    const file = new File([recordedBlob], `speaking.${ext}`, { type: recordedBlob.type });
+    formData.set("audio", file);
+
+    e.preventDefault();
+    btnSubmit.disabled = true;
+    setStatus("Uploading…");
+
+    const resp = await fetch("{{ url_for('speaking') }}", {
+      method: "POST",
+      body: formData
+    });
+
+    if (resp.redirected) {
+      window.location.href = resp.url;
+      return;
+    }
+
+    const txt = await resp.text();
+    setStatus("Upload failed. Check server logs.");
+    console.error(txt);
+    btnSubmit.disabled = false;
+  });
+</script>
+
+{% endblock %}
+
+

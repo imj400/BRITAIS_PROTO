@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="auth stats-page">
+  <div class="card smooth-card stats-card">
+    <h2 class="title-auth">Your Stats</h2>
+
+    <h3>Summary</h3>
+    <ul>
+      <li>Writing submissions: {{ counts.get("WRITING", 0) }}</li>
+      <li>Speaking submissions: {{ counts.get("SPEAKING", 0) }}</li>
+      <li>Listening submissions: {{ counts.get("LISTENING", 0) }}</li>
+    </ul>
+
+    <h3 class="mt-24">Recent Activity</h3>
+
+    {% if submissions and submissions|length > 0 %}
+      <div class="table-wrapper">
+        <table class="stats-table">
+          <colgroup>
+            <col style="width: 180px;">
+            <col style="width: 130px;">
+            <col style="width: auto;">
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for row in submissions %}
+              {% set s = row.s %}
+              <tr>
+                <td class="col-date">{{ s.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                <td class="col-type">{{ s.type }}</td>
+
+                <td>
+                  {# ---------------- WRITING ---------------- #}
+                  {% if s.type == "WRITING" %}
+                    <p class="preview">
+                      {{ s.content[:80] }}{% if s.content|length > 80 %}…{% endif %}
+                    </p>
+
+                    <div class="ai-box">
+                      <strong>AI score:</strong>
+                      {% if s.ai_score is not none %}
+                        {{ s.ai_score|round(0) }}/100
+                      {% else %}
+                        Not available
+                      {% endif %}
+
+                      {% if s.ai_feedback %}
+                        <ul class="ai-list">
+                          {% for tip in s.ai_feedback.splitlines() %}
+                            <li>{{ tip }}</li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {# ---------------- SPEAKING ---------------- #}
+                  {% if s.type == "SPEAKING" %}
+                    {% if row.data %}
+                      <p><strong>Topic:</strong> {{ row.data["topic"]["title"] }}</p>
+                      <p class="muted">{{ row.data["topic"]["prompt"] }}</p>
+
+                      <audio controls style="width:100%; margin:8px 0;">
+                        <source src="{{ row.data['audio_url'] }}" type="{{ row.data['audio_mimetype'] }}">
+                        Your browser does not support the audio element.
+                      </audio>
+
+                      {% if row.data.get("notes") %}
+                        <p class="muted"><strong>Notes:</strong> {{ row.data["notes"] }}</p>
+                      {% endif %}
+
+                      <div class="ai-box" style="margin-top: 10px;">
+                        <strong>AI score:</strong>
+                        {% if s.ai_score is not none %}
+                          {{ s.ai_score|round(0) }}/100
+                        {% else %}
+                          Not available
+                        {% endif %}
+
+                        {% if s.ai_feedback %}
+                          <ul class="ai-list">
+                            {% for tip in s.ai_feedback.splitlines() %}
+                              <li>{{ tip }}</li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
+                      </div>
+
+                      {% if row.data.get("transcript") %}
+                        <details style="margin-top: 8px;">
+                          <summary>Show transcript</summary>
+                          <p style="white-space: pre-wrap; margin-top: 8px;">{{ row.data["transcript"] }}</p>
+                        </details>
+                      {% endif %}
+
+                    {% else %}
+                      <p class="muted">Speaking entry data could not be loaded.</p>
+
+                      <div class="ai-box" style="margin-top: 10px;">
+                        <strong>AI score:</strong>
+                        {% if s.ai_score is not none %}
+                          {{ s.ai_score|round(0) }}/100
+                        {% else %}
+                          Not available
+                        {% endif %}
+
+                        {% if s.ai_feedback %}
+                          <ul class="ai-list">
+                            {% for tip in s.ai_feedback.splitlines() %}
+                              <li>{{ tip }}</li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+
+                  {# ---------------- LISTENING ---------------- #}
+                  {% if s.type == "LISTENING" %}
+                    {% if row.data %}
+                      <p>
+                        <strong>Level:</strong> {{ row.data.get("level", "—") }}
+                        {% if row.data.get("title") %} — <strong>{{ row.data["title"] }}</strong>{% endif %}
+                      </p>
+
+                      {% if row.data.get("audio_url") %}
+                        <audio controls style="width:100%; margin:8px 0;">
+                          <source src="{{ row.data['audio_url'] }}" type="{{ row.data.get('audio_mimetype', 'audio/mpeg') }}">
+                          Your browser does not support the audio element.
+                        </audio>
+                      {% else %}
+                        <p class="muted">No saved audio file for this attempt (browser voice was used).</p>
+                      {% endif %}
+
+                      <div class="ai-box" style="margin-top: 10px;">
+                        <strong>AI score:</strong>
+                        {% if s.ai_score is not none %}
+                          {{ s.ai_score|round(0) }}/100
+                        {% else %}
+                          Not available
+                        {% endif %}
+
+                        {% if s.ai_feedback %}
+                          <ul class="ai-list">
+                            {% for tip in s.ai_feedback.splitlines() %}
+                              <li>{{ tip }}</li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
+                      </div>
+
+                      <details style="margin-top:8px;">
+                        <summary>Show questions + your answers</summary>
+                        <div style="margin-top:8px;">
+                          {% for q in row.data.get("questions", []) %}
+                            <p style="margin:10px 0 4px 0;">
+                              <strong>Q{{ loop.index }}:</strong> {{ q.get("question") }}
+                            </p>
+
+                            {% set answers = row.data.get("user_answers", []) %}
+                            {% set user_answer = answers[loop.index0] if answers and (answers|length > loop.index0) else "—" %}
+
+                            <p class="muted" style="margin:0;">
+                              <strong>Your answer:</strong> {{ user_answer }}<br>
+                              <strong>Correct:</strong> {{ q.get("answer", "—") }}
+                            </p>
+                          {% endfor %}
+                        </div>
+                      </details>
+                    {% else %}
+                      <p class="muted">Listening entry data could not be loaded.</p>
+
+                      <div class="ai-box" style="margin-top: 10px;">
+                        <strong>AI score:</strong>
+                        {% if s.ai_score is not none %}
+                          {{ s.ai_score|round(0) }}/100
+                        {% else %}
+                          Not available
+                        {% endif %}
+
+                        {% if s.ai_feedback %}
+                          <ul class="ai-list">
+                            {% for tip in s.ai_feedback.splitlines() %}
+                              <li>{{ tip }}</li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No submissions yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="task-page">
+  <div class="task-card">
+
+    <h2 class="task-title">Study Planner</h2>
+    <p class="task-subtitle">
+      Pick a day, then add a plan. Saved in the database.
+    </p>
+
+    <div class="cal-header" style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+      <a class="btn secondary" href="{{ url_for('planner', year=prev_year, month=prev_month) }}">← Prev</a>
+
+      <div style="text-align:center;">
+        <div class="cal-month-name">{{ month_name }} {{ year }}</div>
+        <div class="cal-month-hint">Monthly view</div>
+      </div>
+
+      <a class="btn secondary" href="{{ url_for('planner', year=next_year, month=next_month) }}">Next →</a>
+    </div>
+
+    <div class="planner-controls" style="margin-top:16px;">
+      <div class="pc-left">
+        <div class="selected-day">
+          Selected day: <strong id="selectedDayLabel">None</strong>
+        </div>
+      </div>
+
+      <form class="pc-form" method="POST" action="{{ url_for('planner', year=year, month=month) }}" onsubmit="return beforeSubmit();">
+        <input type="hidden" name="day" id="dayInput" value="">
+
+        <label class="pc-field">
+          Activity
+          <select name="activity" id="activitySelect" required>
+            <option value="" disabled selected>Choose…</option>
+            <option value="WRITING">WRITING</option>
+            <option value="LISTENING">LISTENING</option>
+            <option value="SPEAKING">SPEAKING</option>
+          </select>
+        </label>
+
+        <label class="pc-field">
+          Minutes
+          <input name="minutes" id="minutesInput" type="number" min="5" step="5" value="20" required />
+        </label>
+
+        <button class="btn primary pc-btn" type="submit">Add</button>
+        <button class="btn pc-btn secondary" type="button" onclick="clearSelection()">Clear</button>
+      </form>
+    </div>
+
+    <div class="cal-legend" style="margin-top:12px;">
+      <span class="pill pill-writing">Writing</span>
+      <span class="pill pill-listening">Listening</span>
+      <span class="pill pill-speaking">Speaking</span>
+    </div>
+
+    <div class="calendar" style="margin-top:12px;">
+      <div class="cal-weekdays">
+        <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
+        <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
+      </div>
+
+      <div class="cal-grid" id="calGrid">
+        {# ✅ leading blanks so day 1 lands on correct weekday #}
+        {% for _ in range(first_weekday) %}
+          <div class="day blank" aria-hidden="true"></div>
+        {% endfor %}
+
+        {# days #}
+        {% for d in range(1, days_in_month + 1) %}
+          <button type="button" class="day day-btn" data-day="{{ d }}" onclick="selectDay({{ d }})">
+            <div class="num">{{ d }}</div>
+
+            <div class="plans" id="plans-{{ d }}">
+              {% for e in entries_by_day.get(d, []) %}
+                <div class="tag {{ e.activity|lower }}">
+                  {{ e.activity }} · {{ e.minutes }}m
+                </div>
+              {% endfor %}
+            </div>
+          </button>
+        {% endfor %}
+
+        {# ✅ trailing blanks to finish the last week row #}
+        {% set total_cells = first_weekday + days_in_month %}
+        {% set trailing = (7 - (total_cells % 7)) % 7 %}
+        {% for _ in range(trailing) %}
+          <div class="day blank" aria-hidden="true"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let selectedDay = null;
+
+  function pad2(n){ return String(n).padStart(2, "0"); }
+
+  function selectDay(day) {
+    selectedDay = day;
+    document.getElementById("selectedDayLabel").textContent = `${day} / {{ month }} / {{ year }}`;
+
+    document.querySelectorAll(".day-btn.selected").forEach(el => el.classList.remove("selected"));
+    const btn = document.querySelector(`.day-btn[data-day="${day}"]`);
+    if (btn) btn.classList.add("selected");
+
+    const iso = `{{ year }}-${pad2({{ month }})}-${pad2(day)}`;
+    document.getElementById("dayInput").value = iso;
+  }
+
+  function clearSelection() {
+    selectedDay = null;
+    document.getElementById("selectedDayLabel").textContent = "None";
+    document.getElementById("dayInput").value = "";
+    document.querySelectorAll(".day-btn.selected").forEach(el => el.classList.remove("selected"));
+  }
+
+  function beforeSubmit() {
+    if (!selectedDay) {
+      alert("Select a day first.");
+      return false;
+    }
+    if (!document.getElementById("dayInput").value) {
+      alert("Day not set.");
+      return false;
+    }
+    return true;
+  }
+</script>
+
+{% endblock %}
+
+
+
+
+

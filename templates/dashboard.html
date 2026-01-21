@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="layout-dashboard">
+
+  <aside>
+
+    <div class="card smooth-card">
+      <h3 class="panel-title">Level & score</h3>
+
+      <p>
+        Level:
+        <strong>
+          {% if level and level != "—" %}
+            {{ level }}
+          {% else %}
+            —
+          {% endif %}
+        </strong>
+      </p>
+
+      <p>
+        Overall score:
+        <strong>
+          {% if overall_score is not none %}
+            {{ overall_score }} / 100
+          {% else %}
+            —
+          {% endif %}
+        </strong>
+      </p>
+    </div>
+
+    <div class="card smooth-card">
+      <h3 class="panel-title">Planner</h3>
+
+      <p>
+        Next session:
+        <strong>
+          {% if next_session_text %}
+            {{ next_session_text }}
+          {% else %}
+            No upcoming sessions
+          {% endif %}
+        </strong>
+      </p>
+
+      <p>
+        Weekly goal:
+        <strong>{{ weekly_minutes }} / {{ weekly_goal }} minutes</strong>
+      </p>
+
+      <a href="{{ url_for('planner') }}" class="btn primary full">Open planner</a>
+    </div>
+
+    <div class="card smooth-card">
+      <h3 class="panel-title">Streak</h3>
+      <p>Current streak: <strong>{{ streak }} days</strong></p>
+
+      <div class="streak-dots" title="Last 7 days">
+        {% for day in streak_window %}
+          <div
+            class="dot {% if day.done %}filled{% endif %}"
+            title="{{ day.date.strftime('%Y-%m-%d') }} {% if day.done %}✓{% else %}✗{% endif %}">
+          </div>
+        {% endfor %}
+      </div>
+
+      <p class="muted" style="margin-top:10px;">
+        Today:
+        <strong>
+          {% if streak_window and streak_window[-1].done %}
+            Done
+          {% else %}
+            Not yet
+          {% endif %}
+        </strong>
+      </p>
+    </div>
+
+  </aside>
+
+  <!-- RIGHT COLUMN -->
+  <main>
+    <h2 class="dash-title">Dashboard</h2>
+    <p class="dash-subtitle">Choose what you want to practise today.</p>
+
+    <div class="cards">
+      <a href="{{ url_for('listening') }}" class="card smooth-card feature-card">
+        <h3>Listening</h3>
+        <p>Short listening tasks with questions.</p>
+      </a>
+
+      <a href="{{ url_for('speaking') }}" class="card smooth-card feature-card">
+        <h3>Speaking</h3>
+        <p>Simulate a speaking task. Audio will be added later.</p>
+      </a>
+
+      <a href="{{ url_for('writing') }}" class="card smooth-card feature-card">
+        <h3>Writing</h3>
+        <p>Write essays and track your progress.</p>
+      </a>
+
+      <a href="{{ url_for('stats') }}" class="card smooth-card feature-card">
+        <h3>Stats</h3>
+        <p>View your previous submissions and evolution.</p>
+      </a>
+    </div>
+  </main>
+
+</div>
+
+{% endblock %}
+
+
