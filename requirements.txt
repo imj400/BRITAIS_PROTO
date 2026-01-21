@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+python-dotenv
+openai
+gunicorn
+Werkzeug
+Authlib
+requests
